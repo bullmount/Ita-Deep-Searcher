@@ -11,9 +11,9 @@ class SourcesFormatter():
         formatted_text = ""
         for i, source in enumerate(sources, 1):
             if include_snippet:
-                formatted_text += f"<a href={source['url']}>[{source['num_source']}]</a> {source['title']} - {source['snippet']}\n\n"
+                formatted_text += f"<a href='{source['url']}'>[{source['num_source']}]</a> {source['title']} - {source['snippet']}\n\n"
             else:
-                formatted_text += f"<a href={source['url']}>[{source['num_source']}]</a> {source['title']}\n\n"
+                formatted_text += f"<a href='{source['url']}'>[{source['num_source']}]</a> {source['title']}\n\n"
         return formatted_text.strip()
 
     @staticmethod

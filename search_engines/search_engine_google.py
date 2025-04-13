@@ -46,7 +46,7 @@ class GoogleSearchEngine(BaseSearchEngine):
             content = res.description if res.description else ''
             k += 1
             if not all([url, title, content]):
-                logger.warning(f"Warning: Incomplete result from DuckDuckGo: {res}")
+                logger.warning(f"Warning: Incomplete result from Google: {res}")
                 continue
             results.append(
                 SearchEngResult(id=str(uuid.uuid4()), query=query, title=title, snippet=content, url=url, position=k,
