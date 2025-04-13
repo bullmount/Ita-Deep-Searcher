@@ -4,6 +4,7 @@ from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel, LLM
 from langchain_core.messages import AIMessageChunk, BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult, LLMResult
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompt_values import PromptValue
 from pydantic import Field
 import time
@@ -14,7 +15,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# todo: remove
 class MyChatModel(BaseChatModel):
     model_name: str = Field(alias='model')
     max_tokens: Optional[int] = 4 * 1024
@@ -260,38 +260,5 @@ class MyChatModel(BaseChatModel):
         raise Exception("Response not obtained.")
 
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 
-#todo: remove
-from dotenv import load_dotenv
-load_dotenv()
-
-def test_chat_my_model():
-    """Test della classe ChatLMStudio."""
-    try:
-        # Configura l'istanza del modello
-        chat_model = MyChatModel(model="gpt-4o", format="json"
-                                 # base_url="http://localhost:1234/v1",  # Assicurati che LMStudio sia in esecuzione su questa URL
-                                 # model="model",  # Nome del modello da utilizzare
-                                 # temperature=0.7,
-                                 # format="json",  # Richiedi il formato JSON per il risultato
-                                 )
-
-        # Crea un messaggio di input (simulando una conversazione)
-        messages = [HumanMessage(content="Qual è la capitale della Francia? (rispondi in formato json)")]
-
-        # Genera una risposta usando il modello
-        result: ChatResult = chat_model._generate(messages)
-
-        # Stampa il risultato
-        print("Risultato generato:")
-        print(result.generations[0].text)
-        assert "parigi" in result.generations[0].text.lower()
-
-    except Exception as e:
-        print(f"Errore durante il test: {str(e)}")
-
-
-if __name__ == "__main__":
-    test_chat_my_model()
