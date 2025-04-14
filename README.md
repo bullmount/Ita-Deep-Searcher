@@ -19,6 +19,11 @@ Alla fine del processo, viene generato un **riepilogo in formato Markdown**, con
 -   🔗 **Elenco delle fonti consultate**
 -   🧭 **Suggerimenti di approfondimento** (query consigliate)  
 
+
+### 🔁 Ita-Deep-Search Workflow 
+<p align="center">
+<img src="Deep_search_workflow.svg" alt="Grafo"  title="Ita-Deep-Search Workflow"> 
+</p>  
   
 ### 🔎 Cosa cambia rispetto all’originale LangChain
 Oltre alla riformulazione dei prompt in lingua italiana, _Ita Deep Searcher_ presenta le seguenti differenze:   
