@@ -1,6 +1,11 @@
+import cloudscraper
 import requests
-import io
 import math
+
+import fitz
+import pymupdf4llm
+
+import io
 from typing import Optional, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PyPDF2 import PdfReader
@@ -15,49 +20,28 @@ from search_engines.search_engine_base import BaseSearchEngine, SearchEngResult
 from search_engines.search_engine_ddg import DuckDuckGoSearchEngine
 from search_engines.search_engine_google import GoogleSearchEngine
 from search_engines.search_engine_tavily import TavilySearchEngine
-
+import ssl
+from requests.adapters import HTTPAdapter
+import threading
 import logging
 
 logger = logging.getLogger(__name__)
+
+lock = threading.Lock()
+
+
+class SSLIgnoreAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        context = ssl.create_default_context()
+        context.check_hostname = False  # ❗️DISATTIVA PRIMA
+        context.verify_mode = ssl.CERT_NONE  # ❗️POI IMPOSTA verify_mode
+        kwargs['ssl_context'] = context
+        return super().init_poolmanager(*args, **kwargs)
 
 
 class SearchSystem:
     def __init__(self, search_api: str):
         self._search_api = search_api
-
-    def _create_search_engine(self) -> BaseSearchEngine:
-        if self._search_api == "google":
-            return GoogleSearchEngine()
-        elif self._search_api == "duckduckgo":
-            return DuckDuckGoSearchEngine()
-        elif self._search_api == "tavily":
-            return TavilySearchEngine()
-        else:
-            raise ValueError("Invalid search engine name")
-
-    @staticmethod
-    def _fetch_raw_content(url: str) -> Optional[str]:
-        try:
-            if (url.lower().endswith(".pdf") or
-                    "application/pdf" in requests.head(url, allow_redirects=True).headers.get("Content-Type", "")):
-                response = requests.get(url)
-                response.raise_for_status()
-                pdf_reader = PdfReader(io.BytesIO(response.content))
-                testo = "\n".join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
-                return testo.strip() if testo else "[Nessun testo estraibile dal PDF]"
-
-            # Create a client with reasonable timeout
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)  # headless=False per vedere il browser
-                page = browser.new_page()
-                page.goto(url, wait_until="networkidle")
-                html = page.content()
-                doc = Document(html)
-                contenuto_html = doc.summary()
-                return markdownify(contenuto_html)
-        except Exception as e:
-            logger.warning(f"Warning: Failed to fetch full page content for {url}: {str(e)}")
-            return None
 
     def execute_search(self, query_list: list[str],
                        max_filtered_results: int,
@@ -109,6 +93,57 @@ class SearchSystem:
 
         top_results = self._rank_search_results(all_results, max_filtered_results, include_raw_content)
         return top_results[:max_filtered_results]
+
+    def _create_search_engine(self) -> BaseSearchEngine:
+        if self._search_api == "google":
+            return GoogleSearchEngine()
+        elif self._search_api == "duckduckgo":
+            return DuckDuckGoSearchEngine()
+        elif self._search_api == "tavily":
+            return TavilySearchEngine()
+        else:
+            raise ValueError("Invalid search engine name")
+
+    @staticmethod
+    def _fetch_raw_content(url: str) -> Optional[str]:
+        try:
+            session = requests.Session()
+            session.verify = False
+            session.mount("https://", SSLIgnoreAdapter())
+            try:
+                head_resp = session.head(url, allow_redirects=True)
+                content_type = head_resp.headers.get("Content-Type", "")
+            except:
+                content_type = ""
+
+            if (url.lower().endswith(".pdf") or "application/pdf" in content_type):
+                scraper = cloudscraper.create_scraper()  # crea un sessione che esegue JS-challenge
+                scraper.mount("https://", SSLIgnoreAdapter())
+                response = scraper.get(url, verify=False)
+                pdf_bytes = response.content
+                doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                with lock:
+                    # da eseguire in mutua esclusione
+                    testo = pymupdf4llm.to_markdown(doc)
+                    return testo.strip() if testo else "[Nessun testo estraibile dal PDF]"
+
+            # Create a client with reasonable timeout
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)  # headless=False per vedere il browser
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                    viewport={"width": 1280, "height": 800},
+                    java_script_enabled=True,
+                )
+                page = context.new_page()
+                page.goto(url, wait_until="load", timeout=60 * 1000)  # 60 sec.
+                html = page.content()
+                doc = Document(html)
+                contenuto_html = doc.summary()
+                return markdownify(contenuto_html)
+        except Exception as e:
+            logger.warning(f"Warning: Failed to fetch full page content for {url}: {str(e)}")
+            return None
 
     def _rank_search_results(self, results: List[SearchEngResult], top_n: int,
                              include_raw_content: bool) -> List[SearchEngResult]:
@@ -199,5 +234,3 @@ class SearchSystem:
         search_results.sort(key=lambda x: x['score'], reverse=True)
 
         return search_results
-
-

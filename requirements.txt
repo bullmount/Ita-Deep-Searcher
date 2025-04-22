@@ -1,3 +1,4 @@
+cloudscraper
 demjson3
 duckduckgo_search
 googlesearch-python
@@ -11,6 +12,8 @@ numpy
 pandas==2.2.3
 playwright
 pydantic~=2.11.2
+PyMuPDF
+pymupdf4llm
 PyPDF2
 pytest
 python-dotenv==1.1.0
