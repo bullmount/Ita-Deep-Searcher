@@ -21,5 +21,5 @@ class BaseSearchEngine(ABC):
         self.name = name
 
     @abstractmethod
-    def search(self, query: str, max_results: Optional[int] = 10, site: str = None) -> List[SearchEngResult]:
+    def search(self, query: str, max_results: Optional[int] = 10, sites: List[str] = None) -> List[SearchEngResult]:
         pass

@@ -12,11 +12,11 @@ class TavilySearchEngine(BaseSearchEngine):
     def __init__(self):
         super().__init__(name="Tavily")
 
-    def search(self, query, max_results: Optional[int] = 10, site:str = None) -> List[SearchEngResult]:
+    def search(self, query, max_results: Optional[int] = 10, sites:List[str] = None) -> List[SearchEngResult]:
         tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
         search_results = tavily_client.search(query,
-                                              include_domains=[] if site is None else [site],
+                                              include_domains=[] if sites is None else sites,
                                               max_results=max_results,
                                               include_raw_content=False)
 

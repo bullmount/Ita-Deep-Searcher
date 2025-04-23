@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional, Literal
+from typing import Any, Optional, Literal, List
 from pydantic import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
 
@@ -10,8 +10,8 @@ class Configuration(BaseModel):
         title="Search API",
         description="Web search API to use"
     )
-    site_search_restriction: str = Field(
-        default="",
+    sites_search_restriction: List[str] = Field(
+        default=None,
         title="Search Restriction",
         description="Restriction of search to a single site (empty for any site)"
     )

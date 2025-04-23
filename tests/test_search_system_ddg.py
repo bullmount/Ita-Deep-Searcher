@@ -67,12 +67,33 @@ def test_ddg_search_site_restriction():
                                            max_filtered_results=4,
                                            max_results_per_query=8,
                                            include_raw_content=False,
-                                           additional_params={}, site="it.wikipedia.org")
+                                           additional_params={}, sites=["it.wikipedia.org"])
     assert len(results) == 4, "Numero di risultati non corretto"
 
     for result in results:
         assert "it.wikipedia.org" in result["url"], \
             f"URL {result['url']} non è di Wikipedia Italia"
+
+def test_google_search_multi_site_restriction():
+    search_system = SearchSystem("duckduckgo")
+    results = search_system.execute_search(["formazione lavoratori sicurezza lavoro"],
+                                           max_filtered_results=8,
+                                           max_results_per_query=8,
+                                           include_raw_content=False,
+                                           additional_params={}, sites=["puntosicuro.it", "biblus.acca.it"])
+    assert len(results) == 8, "Numero di risultati non corretto"
+
+    for result in results:
+        assert ("puntosicuro.it" in result["url"] or "biblus.acca.it" in
+                result["url"]), f"URL {result['url']} non è di Wikipedia Italia"
+
+    # asserire che esite almeno un url con puntosicuro.it
+    assert any(
+        "puntosicuro.it" in result["url"] for result in results), "Nessun url con puntosicuro.it trovato"
+
+    # almeno un url con biblus.acca.it
+    assert any(
+        "biblus.acca.it" in result["url"] for result in results), "Nessun url con biblus.acca.it trovato"
 
 
 if __name__ == "__main__":

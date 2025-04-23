@@ -119,7 +119,7 @@ class DeepSearcherGraph():
                                             configurable.max_results_per_query,
                                             include_raw_content=configurable.fetch_full_page,
                                             exclude_sources=prev_web_research_results,
-                                            site=configurable.site_search_restriction)
+                                            sites=configurable.sites_search_restriction)
         for res in results:
             last_num_source += 1
             res['num_source'] = last_num_source
